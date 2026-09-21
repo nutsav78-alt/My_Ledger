@@ -91,6 +91,11 @@ class TranslationService {
       'other': 'Other',
       'select_category': 'Select Category',
       'business_logo': 'Business Logo',
+      'switch_profile': 'Switch Profile',
+      'create_new_profile': 'Create New Profile',
+      'view_profile': 'View Profile',
+      'edit_profile': 'Edit Profile',
+      'profile_details': 'Profile Details',
     },
     'Nepali': {
       'home': 'होम',
@@ -183,6 +188,11 @@ class TranslationService {
       'other': 'अन्य',
       'select_category': 'प्रकार छान्नुहोस्',
       'business_logo': 'व्यवसायको लोगो',
+      'switch_profile': 'प्रोफाइल स्विच गर्नुहोस्',
+      'create_new_profile': 'नयाँ प्रोफाइल बनाउनुहोस्',
+      'view_profile': 'प्रोफाइल हेर्नुहोस्',
+      'edit_profile': 'प्रोफाइल सम्पादन गर्नुहोस्',
+      'profile_details': 'प्रोफाइल विवरण',
     },
     'Japanese': {
       'home': 'ホーム',

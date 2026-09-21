@@ -10,6 +10,8 @@ import 'transaction_screen.dart';
 import 'party_screen.dart';
 import 'note_screen.dart';
 import 'settings_screen.dart';
+import 'profile_list_screen.dart';
+import 'profile_details_screen.dart';
 
 class MainShell extends StatefulWidget {
   final String activeFY;
@@ -143,7 +145,11 @@ class _MainShellState extends State<MainShell> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(_getTitle(_currentIndex, lang)),
+            title: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(_getTitle(_currentIndex, lang)),
+            ),
+            centerTitle: false, // Ensure title stays on the left
             // 3-dash (Drawer) should only be on the first tab
             leading: isHomeTab 
                 ? Builder(
@@ -193,88 +199,95 @@ class _MainShellState extends State<MainShell> {
               children: [
                 DrawerHeader(
                   decoration: const BoxDecoration(color: Colors.teal),
+                  margin: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircleAvatar(
-                        radius: 30,
+                        radius: 35,
                         backgroundColor: Colors.white,
                         backgroundImage: _companyLogoPath.isNotEmpty 
                             ? FileImage(File(_companyLogoPath)) 
                             : null,
                         child: _companyLogoPath.isEmpty 
-                            ? const Icon(Icons.business, size: 35, color: Colors.teal) 
+                            ? const Icon(Icons.business, size: 40, color: Colors.teal) 
                             : null,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Text(
                         _companyName.isNotEmpty ? _companyName : 'Company Name',
                         style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         '$_companyEmail | $_companyContact',
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        TranslationService.translate(_companyCategory, lang),
-                        style: const TextStyle(color: Colors.white54, fontSize: 10, fontStyle: FontStyle.italic),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      ListTile(
-                        leading:
-                            const Icon(Icons.calendar_today, color: Colors.teal),
-                        title:
-                            Text(TranslationService.translate('manage_fy', lang)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showAddFYDialog();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.sync_alt, color: Colors.teal),
-                        title: Text(TranslationService.translate('date_converter', lang)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.settings, color: Colors.teal),
-                        title: Text(TranslationService.translate('settings', lang)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
-                        },
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.logout, color: Colors.red),
-                        title: Text(TranslationService.translate('logout', lang), style: const TextStyle(color: Colors.red)),
-                        onTap: () async {
-                          // Since login is removed, we reset profile setup
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear(); 
-                          if (!mounted) return;
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const BusinessProfileScreen()),
-                            (route) => false,
-                          );
-                        },
-                      ),
-                    ],
+                  child: Container(
+                    color: Colors.teal.withValues(alpha: 0.05), // Light consistent background
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.person_outline, color: Colors.teal),
+                          title: Text(TranslationService.translate('view_profile', lang)),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final result = await Navigator.push(context, 
+                              MaterialPageRoute(builder: (context) => const ProfileDetailsScreen()));
+                            if (result == true) {
+                              _loadBusinessProfile();
+                            }
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.calendar_today, color: Colors.teal),
+                          title: Text(TranslationService.translate('manage_fy', lang)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showAddFYDialog();
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.sync_alt, color: Colors.teal),
+                          title: Text(TranslationService.translate('date_converter', lang)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.settings, color: Colors.teal),
+                          title: Text(TranslationService.translate('settings', lang)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                          },
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.switch_account, color: Colors.blue),
+                          title: Text(TranslationService.translate('switch_profile', lang), style: const TextStyle(color: Colors.blue)),
+                          onTap: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ProfileListScreen()),
+                              (route) => false,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

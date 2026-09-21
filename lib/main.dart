@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/business_profile_screen.dart';
+import 'screens/profile_list_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/storage_service.dart';
 
@@ -23,12 +24,20 @@ void main() async {
   final dateType = await StorageService.getDateType();
   dateTypeNotifier.value = dateType;
 
-  final profileSetup = await StorageService.isProfileSetup();
-  final activeFY = await StorageService.getActiveFY() ?? '';
+  final activeProfileId = await StorageService.getActiveProfileId();
+  final allProfiles = await StorageService.getAllProfiles();
+  
+  Widget initial;
+  if (activeProfileId != null) {
+    final activeFY = await StorageService.getActiveFY() ?? '';
+    initial = MainShell(activeFY: activeFY);
+  } else if (allProfiles.isNotEmpty) {
+    initial = const ProfileListScreen();
+  } else {
+    initial = const BusinessProfileScreen();
+  }
 
-  runApp(MyLedgerApp(initialScreen: profileSetup 
-      ? MainShell(activeFY: activeFY) 
-      : const BusinessProfileScreen()));
+  runApp(MyLedgerApp(initialScreen: initial));
 }
 
 class MyLedgerApp extends StatelessWidget {
