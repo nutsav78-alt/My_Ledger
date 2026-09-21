@@ -145,11 +145,9 @@ class _MainShellState extends State<MainShell> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(_getTitle(_currentIndex, lang)),
-            ),
-            centerTitle: false, // Ensure title stays on the left
+            title: Text(_getTitle(_currentIndex, lang)),
+            centerTitle: false,
+            titleSpacing: 0, // Moves title closer to the left icon
             // 3-dash (Drawer) should only be on the first tab
             leading: isHomeTab 
                 ? Builder(
@@ -162,7 +160,7 @@ class _MainShellState extends State<MainShell> {
             actions: [
               if (isHomeTab)
                 Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
+                  padding: const EdgeInsets.only(right: 8.0), // Reduced for corner feel
                   child: DropdownButton<String>(
                     value: _currentFY.isEmpty ? null : _currentFY,
                     hint: Text(TranslationService.translate('select_fy', lang),
