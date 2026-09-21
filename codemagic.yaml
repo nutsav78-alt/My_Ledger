@@ -18,7 +18,7 @@ workflows:
       - name: Build Android APK
         script: |
           flutter build apk --release
-          find build -name "*.apk" -print
+          find android/build -name "*.apk" -print
 
     artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+      - android/build/app/outputs/flutter-apk/app-release.apk
