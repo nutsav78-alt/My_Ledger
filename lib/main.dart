@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/business_profile_screen.dart';
 import 'screens/profile_list_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/app_lock_screen.dart';
 import 'services/storage_service.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
@@ -37,7 +38,13 @@ void main() async {
     initial = const BusinessProfileScreen();
   }
 
-  runApp(MyLedgerApp(initialScreen: initial));
+  // Check App Lock
+  final lockEnabled = await StorageService.isLockEnabled();
+  if (lockEnabled) {
+    runApp(MyLedgerApp(initialScreen: AppLockScreen(onUnlocked: initial)));
+  } else {
+    runApp(MyLedgerApp(initialScreen: initial));
+  }
 }
 
 class MyLedgerApp extends StatelessWidget {

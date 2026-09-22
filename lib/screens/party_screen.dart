@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../models/party.dart';
 import '../services/translation_service.dart';
 import '../main.dart';
+import 'main_shell.dart';
 
 class PartyScreen extends StatefulWidget {
   final String activeFY;
@@ -24,6 +25,27 @@ class _PartyScreenState extends State<PartyScreen> {
   void initState() {
     super.initState();
     _loadData();
+    MainShell.sortNotifier.addListener(_sortData);
+  }
+
+  @override
+  void dispose() {
+    MainShell.sortNotifier.removeListener(_sortData);
+    super.dispose();
+  }
+
+  void _sortData() {
+    final sortType = MainShell.sortNotifier.value;
+    setState(() {
+      if (sortType == 'a_z') {
+        _parties.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      } else if (sortType == 'z_a') {
+        _parties.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+      } else if (sortType == 'date_wise') {
+        // Parties don't have a direct date, maybe sort by ID (creation time)
+        _parties.sort((a, b) => a.id.compareTo(b.id));
+      }
+    });
   }
 
   Future<void> _loadData() async {

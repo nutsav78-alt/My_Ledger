@@ -24,6 +24,8 @@ dependencies:
   file_picker: ^13.1.0
   path_provider: ^2.1.5
   image_picker: ^1.1.2
+  local_auth: ^2.3.0
+  flutter_otp_text_field: ^1.1.1
 
 dev_dependencies:
   flutter_test:

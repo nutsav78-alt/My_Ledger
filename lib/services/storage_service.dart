@@ -13,6 +13,10 @@ class StorageService {
   static const String _dateTypeKey = 'date_type';
   static const String _profilesListKey = 'business_profiles_list';
   static const String _activeProfileIdKey = 'active_profile_id';
+  static const String _lockEnabledKey = 'app_lock_enabled';
+  static const String _lockTypeKey = 'app_lock_type'; // pin, password, pattern
+  static const String _lockValueKey = 'app_lock_value';
+  static const String _biometricEnabledKey = 'biometric_enabled';
 
   static Future<String> _getPrefix() async {
     final id = await getActiveProfileId();
@@ -224,5 +228,46 @@ class StorageService {
   static Future<void> saveDateType(String type) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_dateTypeKey, type);
+  }
+
+  // App Lock
+  static Future<bool> isLockEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_lockEnabledKey) ?? false;
+  }
+
+  static Future<void> setLockEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_lockEnabledKey, enabled);
+  }
+
+  static Future<String> getLockType() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_lockTypeKey) ?? 'pin';
+  }
+
+  static Future<void> setLockType(String type) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lockTypeKey, type);
+  }
+
+  static Future<String> getLockValue() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_lockValueKey) ?? '';
+  }
+
+  static Future<void> setLockValue(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lockValueKey, value);
+  }
+
+  static Future<bool> isBiometricEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_biometricEnabledKey) ?? false;
+  }
+
+  static Future<void> setBiometricEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_biometricEnabledKey, enabled);
   }
 }

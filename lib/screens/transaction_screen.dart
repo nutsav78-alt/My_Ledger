@@ -5,6 +5,7 @@ import '../services/storage_service.dart';
 import '../models/transaction.dart';
 import '../services/translation_service.dart';
 import '../main.dart';
+import 'main_shell.dart';
 
 class TransactionScreen extends StatefulWidget {
   final String activeFY;
@@ -22,6 +23,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
   void initState() {
     super.initState();
     _loadData();
+    MainShell.sortNotifier.addListener(_sortData);
+  }
+
+  @override
+  void dispose() {
+    MainShell.sortNotifier.removeListener(_sortData);
+    super.dispose();
+  }
+
+  void _sortData() {
+    final sortType = MainShell.sortNotifier.value;
+    setState(() {
+      if (sortType == 'a_z') {
+        _transactions.sort((a, b) => a.particular.toLowerCase().compareTo(b.particular.toLowerCase()));
+      } else if (sortType == 'z_a') {
+        _transactions.sort((a, b) => b.particular.toLowerCase().compareTo(a.particular.toLowerCase()));
+      } else if (sortType == 'date_wise') {
+        _transactions.sort((a, b) => b.date.compareTo(a.date));
+      }
+    });
   }
 
   Future<void> _loadData() async {

@@ -12,6 +12,8 @@ import 'note_screen.dart';
 import 'settings_screen.dart';
 import 'profile_list_screen.dart';
 import 'profile_details_screen.dart';
+import 'lock_settings_screen.dart';
+import 'help_screen.dart';
 
 class MainShell extends StatefulWidget {
   final String activeFY;
@@ -31,6 +33,7 @@ class _MainShellState extends State<MainShell> {
   String _companyCategory = '';
   String _companyLogoPath = '';
   int _dataVersion = 0;
+  static final ValueNotifier<String> sortNotifier = ValueNotifier('date_wise');
 
   @override
   void initState() {
@@ -121,6 +124,49 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _showSortOptions(String lang) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(TranslationService.translate('sort_by', lang), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.sort_by_alpha),
+            title: Text(TranslationService.translate('a_z', lang)),
+            onTap: () {
+              sortNotifier.value = 'a_z';
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.sort_by_alpha, textDirection: TextDirection.rtl),
+            title: Text(TranslationService.translate('z_a', lang)),
+            onTap: () {
+              sortNotifier.value = 'z_a';
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_month),
+            title: Text(TranslationService.translate('date_wise', lang)),
+            onTap: () {
+              sortNotifier.value = 'date_wise';
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
   String _getTitle(int index, String lang) {
     switch (index) {
       case 0:
@@ -159,13 +205,13 @@ class _MainShellState extends State<MainShell> {
                 : null,
             actions: [
               if (isHomeTab)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0), // Reduced for corner feel
+                DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _currentFY.isEmpty ? null : _currentFY,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 4), // Tighter to the corner
                     hint: Text(TranslationService.translate('select_fy', lang),
-                        style: const TextStyle(fontSize: 14)),
-                    underline: const SizedBox(),
+                        style: const TextStyle(fontSize: 12)),
                     icon: const Icon(Icons.arrow_drop_down, color: Colors.teal),
                     items: [
                       ..._fyList.map((String fy) {
@@ -190,52 +236,63 @@ class _MainShellState extends State<MainShell> {
                     onChanged: _onFYChanged,
                   ),
                 ),
+              if (_currentIndex != 0) // Show filter on other tabs
+                IconButton(
+                  icon: const Icon(Icons.sort, color: Colors.teal),
+                  onPressed: () => _showSortOptions(lang),
+                ),
             ],
           ),
           drawer: isHomeTab ? Drawer(
-            child: Column(
-              children: [
-                DrawerHeader(
-                  decoration: const BoxDecoration(color: Colors.teal),
-                  margin: EdgeInsets.zero,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircleAvatar(
-                        radius: 35,
-                        backgroundColor: Colors.white,
-                        backgroundImage: _companyLogoPath.isNotEmpty 
-                            ? FileImage(File(_companyLogoPath)) 
-                            : null,
-                        child: _companyLogoPath.isEmpty 
-                            ? const Icon(Icons.business, size: 40, color: Colors.teal) 
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _companyName.isNotEmpty ? _companyName : 'Company Name',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '$_companyEmail | $_companyContact',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    color: Colors.teal.withValues(alpha: 0.05), // Light consistent background
-                    child: ListView(
-                      padding: EdgeInsets.zero,
+            child: Container(
+              color: Colors.white, // Drawer background
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    color: Colors.teal, // Solid teal header
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 24,
+                      left: 20,
+                      right: 20,
+                      bottom: 24,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+                          backgroundImage: _companyLogoPath.isNotEmpty 
+                              ? FileImage(File(_companyLogoPath)) 
+                              : null,
+                          child: _companyLogoPath.isEmpty 
+                              ? const Icon(Icons.business, size: 40, color: Colors.teal) 
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _companyName.isNotEmpty ? _companyName : 'Company Name',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '$_companyEmail | $_companyContact',
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      color: Colors.teal.withValues(alpha: 0.05),
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        children: [
                         ListTile(
                           leading: const Icon(Icons.person_outline, color: Colors.teal),
                           title: Text(TranslationService.translate('view_profile', lang)),
@@ -257,6 +314,14 @@ class _MainShellState extends State<MainShell> {
                           },
                         ),
                         ListTile(
+                          leading: const Icon(Icons.lock_outline, color: Colors.teal),
+                          title: Text(TranslationService.translate('app_lock', lang)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const LockSettingsScreen()));
+                          },
+                        ),
+                        ListTile(
                           leading: const Icon(Icons.sync_alt, color: Colors.teal),
                           title: Text(TranslationService.translate('date_converter', lang)),
                           onTap: () {
@@ -270,6 +335,14 @@ class _MainShellState extends State<MainShell> {
                           onTap: () {
                             Navigator.pop(context);
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.help_outline, color: Colors.teal),
+                          title: Text(TranslationService.translate('help', lang)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpScreen()));
                           },
                         ),
                         const Divider(),

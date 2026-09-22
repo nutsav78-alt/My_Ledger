@@ -3,6 +3,7 @@ import '../services/storage_service.dart';
 import '../models/note.dart';
 import '../services/translation_service.dart';
 import '../main.dart';
+import 'main_shell.dart';
 
 class NoteScreen extends StatefulWidget {
   final String activeFY;
@@ -20,6 +21,26 @@ class _NoteScreenState extends State<NoteScreen> {
   void initState() {
     super.initState();
     _loadNotes();
+    MainShell.sortNotifier.addListener(_sortData);
+  }
+
+  @override
+  void dispose() {
+    MainShell.sortNotifier.removeListener(_sortData);
+    super.dispose();
+  }
+
+  void _sortData() {
+    final sortType = MainShell.sortNotifier.value;
+    setState(() {
+      if (sortType == 'a_z') {
+        _notes.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      } else if (sortType == 'z_a') {
+        _notes.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+      } else if (sortType == 'date_wise') {
+        _notes.sort((a, b) => b.date.compareTo(a.date));
+      }
+    });
   }
 
   Future<void> _loadNotes() async {
@@ -181,7 +202,20 @@ class _NoteScreenState extends State<NoteScreen> {
                           children: [
                             Text(note.content),
                             const SizedBox(height: 4),
-                            Text(note.date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            ValueListenableBuilder<String>(
+                              valueListenable: dateTypeNotifier,
+                              builder: (context, dateType, _) {
+                                String displayDate = note.date;
+                                try {
+                                  if (dateType == 'BS') {
+                                    displayDate = DateTime.parse(note.date).toNepaliDateTime().format('yyyy-MM-dd');
+                                  }
+                                } catch (e) {
+                                  // Fallback to original
+                                }
+                                return Text(displayDate, style: const TextStyle(fontSize: 12, color: Colors.grey));
+                              },
+                            ),
                           ],
                         ),
                         trailing: PopupMenuButton<String>(

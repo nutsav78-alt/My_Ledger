@@ -394,7 +394,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             title: Text(tx.particular, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(tx.date),
+            subtitle: ValueListenableBuilder<String>(
+              valueListenable: dateTypeNotifier,
+              builder: (context, dateType, _) {
+                return Text(dateType == 'AD' 
+                    ? tx.date 
+                    : DateTime.parse(tx.date).toNepaliDateTime().format('yyyy-MM-dd'));
+              },
+            ),
             trailing: Text(
               'Rs. ${tx.amount.toStringAsFixed(2)}',
               style: TextStyle(
