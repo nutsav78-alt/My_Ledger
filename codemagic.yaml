@@ -18,7 +18,21 @@ workflows:
       - name: Build Android APK
         script: |
           flutter build apk --release
-          find android/build -name "*.apk" -print
+
+      - name: Prepare APK artifact
+        script: |
+          mkdir -p artifacts
+          APK_PATH=$(find android/build -name "app-release.apk" -type f | head -n 1)
+
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: app-release.apk not found"
+            find . -name "*.apk" -type f -print
+            exit 1
+          fi
+
+          echo "APK found at: $APK_PATH"
+          cp "$APK_PATH" artifacts/app-release.apk
+          ls -lh artifacts/app-release.apk
 
     artifacts:
-      - android/build/app/outputs/flutter-apk/app-release.apk
+      - artifacts/app-release.apk
