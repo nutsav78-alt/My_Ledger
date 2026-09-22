@@ -1,4 +1,3 @@
-```dart
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../models/note.dart';
@@ -35,6 +34,7 @@ class _NoteScreenState extends State<NoteScreen> {
 
     setState(() {
       _notes = notes;
+      _notes.sort((a, b) => b.date.compareTo(a.date));
       _loading = false;
     });
   }
@@ -58,7 +58,7 @@ class _NoteScreenState extends State<NoteScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
           TranslationService.translate('add_note', lang),
         ),
@@ -88,21 +88,23 @@ class _NoteScreenState extends State<NoteScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               TranslationService.translate('cancel', lang),
             ),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (titleController.text.isNotEmpty) {
+              if (titleController.text.trim().isNotEmpty) {
                 final newNote = Note(
                   id: DateTime.now()
                       .millisecondsSinceEpoch
                       .toString(),
-                  title: titleController.text,
+                  title: titleController.text.trim(),
                   content: contentController.text,
-                  date: DateTime.now().toString().split(' ')[0],
+                  date: DateTime.now()
+                      .toString()
+                      .split(' ')[0],
                   financialYear: widget.activeFY,
                 );
 
@@ -115,8 +117,8 @@ class _NoteScreenState extends State<NoteScreen> {
                   _notes,
                 );
 
-                if (context.mounted) {
-                  Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
                 }
               }
             },
@@ -127,9 +129,15 @@ class _NoteScreenState extends State<NoteScreen> {
         ],
       ),
     );
+
+    titleController.dispose();
+    contentController.dispose();
   }
 
-  Future<void> _editNote(Note note, int index) async {
+  Future<void> _editNote(
+    Note note,
+    int index,
+  ) async {
     final titleController = TextEditingController(
       text: note.title,
     );
@@ -142,9 +150,12 @@ class _NoteScreenState extends State<NoteScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
-          TranslationService.translate('edit_note', lang),
+          TranslationService.translate(
+            'edit_note',
+            lang,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -172,17 +183,20 @@ class _NoteScreenState extends State<NoteScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
-              TranslationService.translate('cancel', lang),
+              TranslationService.translate(
+                'cancel',
+                lang,
+              ),
             ),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (titleController.text.isNotEmpty) {
+              if (titleController.text.trim().isNotEmpty) {
                 final updatedNote = Note(
                   id: note.id,
-                  title: titleController.text,
+                  title: titleController.text.trim(),
                   content: contentController.text,
                   date: note.date,
                   financialYear: note.financialYear,
@@ -197,18 +211,24 @@ class _NoteScreenState extends State<NoteScreen> {
                   _notes,
                 );
 
-                if (context.mounted) {
-                  Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
                 }
               }
             },
             child: Text(
-              TranslationService.translate('save', lang),
+              TranslationService.translate(
+                'save',
+                lang,
+              ),
             ),
           ),
         ],
       ),
     );
+
+    titleController.dispose();
+    contentController.dispose();
   }
 
   Future<void> _deleteNote(int index) async {
@@ -216,9 +236,12 @@ class _NoteScreenState extends State<NoteScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
-          TranslationService.translate('delete_note', lang),
+          TranslationService.translate(
+            'delete_note',
+            lang,
+          ),
         ),
         content: Text(
           TranslationService.translate(
@@ -228,15 +251,23 @@ class _NoteScreenState extends State<NoteScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
             child: Text(
-              TranslationService.translate('cancel', lang),
+              TranslationService.translate(
+                'cancel',
+                lang,
+              ),
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
             child: Text(
-              TranslationService.translate('delete', lang),
+              TranslationService.translate(
+                'delete',
+                lang,
+              ),
               style: const TextStyle(
                 color: Colors.red,
               ),
@@ -289,21 +320,27 @@ class _NoteScreenState extends State<NoteScreen> {
                             Text(note.content),
                             const SizedBox(height: 4),
                             ValueListenableBuilder<String>(
-                              valueListenable: dateTypeNotifier,
+                              valueListenable:
+                                  dateTypeNotifier,
                               builder:
                                   (context, dateType, _) {
-                                String displayDate = note.date;
+                                String displayDate =
+                                    note.date;
 
                                 try {
                                   if (dateType == 'BS') {
                                     displayDate =
                                         NepaliDateTime
                                             .fromDateTime(
-                                      DateTime.parse(note.date),
-                                    ).format('yyyy-MM-dd');
+                                      DateTime.parse(
+                                        note.date,
+                                      ),
+                                    ).format(
+                                      'yyyy-MM-dd',
+                                    );
                                   }
-                                } catch (e) {
-                                  // Fallback to original date.
+                                } catch (_) {
+                                  // Keep original date.
                                 }
 
                                 return Text(
@@ -319,10 +356,10 @@ class _NoteScreenState extends State<NoteScreen> {
                         ),
                         trailing:
                             PopupMenuButton<String>(
-                          onSelected: (val) {
-                            if (val == 'edit') {
+                          onSelected: (value) {
+                            if (value == 'edit') {
                               _editNote(note, index);
-                            } else if (val == 'delete') {
+                            } else if (value == 'delete') {
                               _deleteNote(index);
                             }
                           },
@@ -351,8 +388,7 @@ class _NoteScreenState extends State<NoteScreen> {
                     );
                   },
                 ),
-          floatingActionButton:
-              FloatingActionButton(
+          floatingActionButton: FloatingActionButton(
             onPressed: _addNote,
             child: const Icon(Icons.note_add),
           ),
@@ -361,4 +397,3 @@ class _NoteScreenState extends State<NoteScreen> {
     );
   }
 }
-```

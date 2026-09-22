@@ -1,5 +1,4 @@
-```dart
-import 'dart:io'; // TEST
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -7,7 +6,6 @@ import '../main.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 
-import 'business_profile_screen.dart';
 import 'home_screen.dart';
 import 'transaction_screen.dart';
 import 'party_screen.dart';
@@ -40,7 +38,6 @@ class _MainShellState extends State<MainShell> {
   String _companyName = '';
   String _companyEmail = '';
   String _companyContact = '';
-  String _companyCategory = '';
   String _companyLogoPath = '';
 
   int _dataVersion = 0;
@@ -68,7 +65,6 @@ class _MainShellState extends State<MainShell> {
         _companyName = profile['name'] ?? '';
         _companyEmail = profile['email'] ?? '';
         _companyContact = profile['contact'] ?? '';
-        _companyCategory = profile['category'] ?? '';
         _companyLogoPath = profile['logoPath'] ?? '';
       });
     }
@@ -120,23 +116,23 @@ class _MainShellState extends State<MainShell> {
             children: [
               TextField(
                 controller: fromController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: TranslationService.translate(
                     'from_year',
                     lang,
                   ),
                 ),
-                keyboardType: TextInputType.number,
               ),
               TextField(
                 controller: toController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: TranslationService.translate(
                     'to_year',
                     lang,
                   ),
                 ),
-                keyboardType: TextInputType.number,
               ),
             ],
           ),
@@ -146,47 +142,43 @@ class _MainShellState extends State<MainShell> {
                 Navigator.pop(dialogContext);
               },
               child: Text(
-                TranslationService.translate(
-                  'cancel',
-                  lang,
-                ),
+                TranslationService.translate('cancel', lang),
               ),
             ),
             ElevatedButton(
               onPressed: () async {
-                if (fromController.text.isEmpty ||
-                    toController.text.isEmpty) {
+                final from = fromController.text.trim();
+                final to = toController.text.trim();
+
+                if (from.isEmpty || to.isEmpty) {
                   return;
                 }
 
-                final newYear =
-                    '${fromController.text}-${toController.text}';
+                final newYear = '$from-$to';
 
                 if (!_fyList.contains(newYear)) {
-                  setState(() {
-                    _fyList.add(newYear);
-                    _currentFY = newYear;
-                    _dataVersion++;
-                  });
+                  _fyList.add(newYear);
 
                   await StorageService.saveFinancialYears(
                     _fyList,
                   );
-
-                  await StorageService.setActiveFY(
-                    newYear,
-                  );
                 }
+
+                await StorageService.setActiveFY(newYear);
+
+                if (!mounted) return;
+
+                setState(() {
+                  _currentFY = newYear;
+                  _dataVersion++;
+                });
 
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                 }
               },
               child: Text(
-                TranslationService.translate(
-                  'save',
-                  lang,
-                ),
+                TranslationService.translate('save', lang),
               ),
             ),
           ],
@@ -196,6 +188,8 @@ class _MainShellState extends State<MainShell> {
 
     fromController.dispose();
     toController.dispose();
+
+    await _loadFYList();
   }
 
   void _showSortOptions(String lang) {
@@ -285,21 +279,25 @@ class _MainShellState extends State<MainShell> {
     switch (index) {
       case 0:
         return TranslationService.translate('home', lang);
+
       case 1:
         return TranslationService.translate(
           'transaction',
           lang,
         );
+
       case 2:
         return TranslationService.translate(
           'party',
           lang,
         );
+
       case 3:
         return TranslationService.translate(
           'note',
           lang,
         );
+
       default:
         return 'My Ledger';
     }
@@ -310,7 +308,7 @@ class _MainShellState extends State<MainShell> {
     return ValueListenableBuilder<String>(
       valueListenable: languageNotifier,
       builder: (context, lang, _) {
-        final bool isHomeTab = _currentIndex == 0;
+        final isHomeTab = _currentIndex == 0;
 
         return Scaffold(
           appBar: AppBar(
@@ -322,7 +320,6 @@ class _MainShellState extends State<MainShell> {
             ),
             centerTitle: false,
             titleSpacing: 0,
-
             leading: isHomeTab
                 ? Builder(
                     builder: (context) {
@@ -335,17 +332,13 @@ class _MainShellState extends State<MainShell> {
                     },
                   )
                 : null,
-
             actions: [
               if (isHomeTab)
                 DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value:
-                        _currentFY.isEmpty ? null : _currentFY,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(
-                      right: 4,
-                    ),
+                    value: _currentFY.isEmpty
+                        ? null
+                        : _currentFY,
                     hint: Text(
                       TranslationService.translate(
                         'select_fy',
@@ -361,7 +354,7 @@ class _MainShellState extends State<MainShell> {
                     ),
                     items: [
                       ..._fyList.map(
-                        (String fy) {
+                        (fy) {
                           return DropdownMenuItem<String>(
                             value: fy,
                             child: Text(
@@ -399,7 +392,6 @@ class _MainShellState extends State<MainShell> {
                     onChanged: _onFYChanged,
                   ),
                 ),
-
               if (!isHomeTab)
                 IconButton(
                   icon: const Icon(
@@ -410,258 +402,275 @@ class _MainShellState extends State<MainShell> {
                     _showSortOptions(lang);
                   },
                 ),
+              if (isHomeTab)
+                Padding(
+                  padding: const EdgeInsets.only(
+                    right: 8,
+                  ),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.teal.shade100,
+                    backgroundImage:
+                        _companyLogoPath.isNotEmpty
+                            ? FileImage(
+                                File(_companyLogoPath),
+                              )
+                            : null,
+                    child: _companyLogoPath.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.teal,
+                          )
+                        : null,
+                  ),
+                ),
             ],
           ),
 
           drawer: isHomeTab
               ? Drawer(
-                  child: Container(
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          color: Colors.teal,
-                          padding: EdgeInsets.only(
-                            top: MediaQuery.of(context)
-                                    .padding
-                                    .top +
-                                24,
-                            left: 20,
-                            right: 20,
-                            bottom: 24,
-                          ),
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              CircleAvatar(
-                                radius: 40,
-                                backgroundColor: Colors.white,
-                                backgroundImage:
-                                    _companyLogoPath
-                                            .isNotEmpty
-                                        ? FileImage(
-                                            File(
-                                              _companyLogoPath,
-                                            ),
-                                          )
-                                        : null,
-                                child:
-                                    _companyLogoPath.isEmpty
-                                        ? const Icon(
-                                            Icons.business,
-                                            size: 40,
-                                            color: Colors.teal,
-                                          )
-                                        : null,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _companyName.isNotEmpty
-                                    ? _companyName
-                                    : 'Company Name',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow:
-                                    TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                '$_companyEmail | $_companyContact',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
-                                overflow:
-                                    TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        color: Colors.teal,
+                        padding: EdgeInsets.only(
+                          top:
+                              MediaQuery.of(context)
+                                  .padding
+                                  .top +
+                              24,
+                          left: 20,
+                          right: 20,
+                          bottom: 24,
                         ),
-
-                        Expanded(
-                          child: Container(
-                            color: Colors.teal.withValues(
-                              alpha: 0.05,
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 40,
+                              backgroundColor: Colors.white,
+                              backgroundImage:
+                                  _companyLogoPath.isNotEmpty
+                                      ? FileImage(
+                                          File(
+                                            _companyLogoPath,
+                                          ),
+                                        )
+                                      : null,
+                              child:
+                                  _companyLogoPath.isEmpty
+                                      ? const Icon(
+                                          Icons.business,
+                                          size: 40,
+                                          color: Colors.teal,
+                                        )
+                                      : null,
                             ),
-                            child: ListView(
-                              padding: EdgeInsets.zero,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.person_outline,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService
-                                        .translate(
-                                      'view_profile',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () async {
-                                    Navigator.pop(context);
-
-                                    final result =
-                                        await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ProfileDetailsScreen(),
-                                      ),
-                                    );
-
-                                    if (result == true) {
-                                      _loadBusinessProfile();
-                                    }
-                                  },
-                                ),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.calendar_today,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'manage_fy',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _showAddFYDialog();
-                                  },
-                                ),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.lock_outline,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'app_lock',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const LockSettingsScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.sync_alt,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'date_converter',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SettingsScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.settings,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'settings',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SettingsScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.help_outline,
-                                    color: Colors.teal,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'help',
-                                      lang,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const HelpScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                const Divider(),
-
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.switch_account,
-                                    color: Colors.blue,
-                                  ),
-                                  title: Text(
-                                    TranslationService.translate(
-                                      'switch_profile',
-                                      lang,
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ProfileListScreen(),
-                                      ),
-                                      (route) => false,
-                                    );
-                                  },
-                                ),
-                              ],
+                            const SizedBox(height: 16),
+                            Text(
+                              _companyName.isNotEmpty
+                                  ? _companyName
+                                  : 'Company Name',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow:
+                                  TextOverflow.ellipsis,
                             ),
-                          ),
+                            Text(
+                              '$_companyEmail | $_companyContact',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                              overflow:
+                                  TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.zero,
+                          children: [
+                            ListTile(
+                              leading: const Icon(
+                                Icons.person_outline,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'view_profile',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () async {
+                                Navigator.pop(context);
+
+                                final result =
+                                    await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ProfileDetailsScreen(),
+                                  ),
+                                );
+
+                                if (result == true) {
+                                  _loadBusinessProfile();
+                                }
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.calendar_today,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'manage_fy',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showAddFYDialog();
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.lock_outline,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'app_lock',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const LockSettingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.sync_alt,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'date_converter',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SettingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.settings,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'settings',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SettingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.help_outline,
+                                color: Colors.teal,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'help',
+                                  lang,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const HelpScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            const Divider(),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.switch_account,
+                                color: Colors.blue,
+                              ),
+                              title: Text(
+                                TranslationService.translate(
+                                  'switch_profile',
+                                  lang,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ProfileListScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 )
               : null,
@@ -696,7 +705,8 @@ class _MainShellState extends State<MainShell> {
             ],
           ),
 
-          bottomNavigationBar: BottomNavigationBar(
+          bottomNavigationBar:
+              BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
               setState(() {
@@ -719,7 +729,9 @@ class _MainShellState extends State<MainShell> {
                 ),
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.receipt_long),
+                icon: const Icon(
+                  Icons.receipt_long,
+                ),
                 label: TranslationService.translate(
                   'transaction',
                   lang,
@@ -746,4 +758,3 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
-```

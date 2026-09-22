@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:nepali_date_picker/nepali_date_picker.dart' as ndp;
 import '../services/storage_service.dart';
 import '../models/transaction.dart';
 import '../services/translation_service.dart';
@@ -8,6 +9,7 @@ import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
   final String activeFY;
+
   const HomeScreen({super.key, required this.activeFY});
 
   @override
@@ -31,7 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final transactions = await StorageService.getTransactions(widget.activeFY);
+    final transactions =
+        await StorageService.getTransactions(widget.activeFY);
+
+    if (!mounted) return;
+
     setState(() {
       _transactions = transactions;
       _calculateSummary();
@@ -64,12 +70,16 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
     }
 
-    start = DateTime(now.year, now.month, now.day).subtract(Duration(days: days - 1));
+    start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: days - 1));
 
     double income = 0;
     double expense = 0;
     List<Transaction> filtered = [];
-    
+
     Map<int, double> incomeMap = {};
     Map<int, double> expenseMap = {};
 
@@ -77,8 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
       DateTime? tDate = DateTime.tryParse(t.date);
       if (tDate == null) continue;
 
-      if (tDate.isAfter(start.subtract(const Duration(seconds: 1)))) {
+      if (tDate.isAfter(
+        start.subtract(const Duration(seconds: 1)),
+      )) {
         filtered.add(t);
+
         if (t.type == TransactionType.income) {
           income += t.amount;
         } else {
@@ -86,19 +99,24 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         int index = -1;
+
         if (_period == 'Weekly') {
           index = tDate.difference(start).inDays;
         } else if (_period == 'Monthly') {
           index = tDate.difference(start).inDays ~/ 7;
         } else if (_period == 'Yearly') {
-          index = (tDate.year - start.year) * 12 + tDate.month - start.month;
+          index = (tDate.year - start.year) * 12 +
+              tDate.month -
+              start.month;
         }
 
         if (index >= 0 && index < count) {
           if (t.type == TransactionType.income) {
-            incomeMap[index] = (incomeMap[index] ?? 0) + t.amount;
+            incomeMap[index] =
+                (incomeMap[index] ?? 0) + t.amount;
           } else {
-            expenseMap[index] = (expenseMap[index] ?? 0) + t.amount;
+            expenseMap[index] =
+                (expenseMap[index] ?? 0) + t.amount;
           }
         }
       }
@@ -107,14 +125,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _totalIncome = income;
     _totalExpense = expense;
     _filteredTransactions = filtered;
-    _filteredTransactions.sort((a, b) => b.date.compareTo(a.date));
+
+    _filteredTransactions.sort(
+      (a, b) => b.date.compareTo(a.date),
+    );
 
     _incomeSpots = [];
     _expenseSpots = [];
-    
+
     for (int i = 0; i < count; i++) {
-      _incomeSpots.add(FlSpot(i.toDouble(), incomeMap[i] ?? 0));
-      _expenseSpots.add(FlSpot(i.toDouble(), expenseMap[i] ?? 0));
+      _incomeSpots.add(
+        FlSpot(i.toDouble(), incomeMap[i] ?? 0),
+      );
+      _expenseSpots.add(
+        FlSpot(i.toDouble(), expenseMap[i] ?? 0),
+      );
     }
   }
 
@@ -125,22 +150,32 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           body: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
               : RefreshIndicator(
                   onRefresh: _loadData,
                   child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         _buildSummarySection(lang),
                         const SizedBox(height: 24),
                         _buildChartSection(lang),
                         const SizedBox(height: 24),
                         Text(
-                          TranslationService.translate('recent_transactions', lang),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          TranslationService.translate(
+                            'recent_transactions',
+                            lang,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         _buildTransactionList(lang),
@@ -156,30 +191,66 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSummarySection(String lang) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
               children: [
-                _summaryItem(TranslationService.translate('income', lang), _totalIncome, Colors.green),
-                _summaryItem(TranslationService.translate('expense', lang), _totalExpense, Colors.red),
+                _summaryItem(
+                  TranslationService.translate(
+                    'income',
+                    lang,
+                  ),
+                  _totalIncome,
+                  Colors.green,
+                ),
+                _summaryItem(
+                  TranslationService.translate(
+                    'expense',
+                    lang,
+                  ),
+                  _totalExpense,
+                  Colors.red,
+                ),
               ],
             ),
             const Divider(height: 32),
-            _summaryItem(TranslationService.translate('balance', lang), _totalIncome - _totalExpense, Colors.blue, isLarge: true),
+            _summaryItem(
+              TranslationService.translate(
+                'balance',
+                lang,
+              ),
+              _totalIncome - _totalExpense,
+              Colors.blue,
+              isLarge: true,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _summaryItem(String label, double amount, Color color, {bool isLarge = false}) {
+  Widget _summaryItem(
+    String label,
+    double amount,
+    Color color, {
+    bool isLarge = false,
+  }) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: isLarge ? 18 : 14, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isLarge ? 18 : 14,
+            color: Colors.grey[600],
+          ),
+        ),
         const SizedBox(height: 4),
         Text(
           'Rs. ${amount.toStringAsFixed(2)}',
@@ -195,33 +266,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildChartSection(String lang) {
     double maxVal = 0;
+
     for (var s in _incomeSpots) {
       if (s.y > maxVal) maxVal = s.y;
     }
+
     for (var s in _expenseSpots) {
       if (s.y > maxVal) maxVal = s.y;
     }
-    
-    // Y-Axis intervals of 500
+
     maxVal = (maxVal / 500).ceil() * 500.0;
+
     if (maxVal == 0) maxVal = 1000;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment:
+              MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              TranslationService.translate('performance_chart', lang),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              TranslationService.translate(
+                'performance_chart',
+                lang,
+              ),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             DropdownButton<String>(
               value: _period,
-              items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+              items: [
+                'Weekly',
+                'Monthly',
+                'Yearly',
+              ].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(TranslationService.translate(value.toLowerCase(), lang)),
+                  child: Text(
+                    TranslationService.translate(
+                      value.toLowerCase(),
+                      lang,
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (val) {
@@ -238,7 +327,10 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 16),
         Container(
           height: 250,
-          padding: const EdgeInsets.only(right: 16, top: 16),
+          padding: const EdgeInsets.only(
+            right: 16,
+            top: 16,
+          ),
           child: LineChart(
             LineChartData(
               lineBarsData: [
@@ -248,13 +340,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.green,
                   barWidth: 3,
                   isStrokeCapRound: true,
-                  dotData: const FlDotData(show: false),
+                  dotData: const FlDotData(
+                    show: false,
+                  ),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        Colors.green.withValues(alpha: 0.3),
-                        Colors.green.withValues(alpha: 0.0),
+                        Colors.green.withValues(
+                          alpha: 0.3,
+                        ),
+                        Colors.green.withValues(
+                          alpha: 0.0,
+                        ),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -267,13 +365,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.red,
                   barWidth: 3,
                   isStrokeCapRound: true,
-                  dotData: const FlDotData(show: false),
+                  dotData: const FlDotData(
+                    show: false,
+                  ),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        Colors.red.withValues(alpha: 0.3),
-                        Colors.red.withValues(alpha: 0.0),
+                        Colors.red.withValues(
+                          alpha: 0.3,
+                        ),
+                        Colors.red.withValues(
+                          alpha: 0.0,
+                        ),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -288,7 +392,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    getTitlesWidget: (value, meta) => _getBottomTitles(value, meta, lang),
+                    getTitlesWidget:
+                        (value, meta) =>
+                            _getBottomTitles(
+                      value,
+                      meta,
+                      lang,
+                    ),
                     reservedSize: 32,
                     interval: 1,
                   ),
@@ -298,17 +408,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     showTitles: true,
                     interval: 500,
                     getTitlesWidget: (value, meta) {
-                      if (value == 0) return const SizedBox.shrink();
+                      if (value == 0) {
+                        return const SizedBox.shrink();
+                      }
+
                       return Text(
                         value.toInt().toString(),
-                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                        ),
                       );
                     },
                     reservedSize: 45,
                   ),
                 ),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                  sideTitles:
+                      SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles:
+                      SideTitles(showTitles: false),
+                ),
               ),
               gridData: FlGridData(
                 show: true,
@@ -316,7 +438,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 horizontalInterval: 500,
                 getDrawingHorizontalLine: (value) {
                   return FlLine(
-                    color: Colors.grey.withValues(alpha: 0.2),
+                    color: Colors.grey.withValues(
+                      alpha: 0.2,
+                    ),
                     strokeWidth: 1,
                   );
                 },
@@ -324,13 +448,26 @@ class _HomeScreenState extends State<HomeScreen> {
               borderData: FlBorderData(
                 show: true,
                 border: Border(
-                  bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-                  left: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                  bottom: BorderSide(
+                    color: Colors.grey.withValues(
+                      alpha: 0.3,
+                    ),
+                  ),
+                  left: BorderSide(
+                    color: Colors.grey.withValues(
+                      alpha: 0.3,
+                    ),
+                  ),
                 ),
               ),
               lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (touchedSpot) => Colors.blueGrey.withValues(alpha: 0.8),
+                touchTooltipData:
+                    LineTouchTooltipData(
+                  getTooltipColor:
+                      (touchedSpot) =>
+                          Colors.blueGrey.withValues(
+                    alpha: 0.8,
+                  ),
                 ),
               ),
             ),
@@ -340,20 +477,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _getBottomTitles(double value, TitleMeta meta, String lang) {
+  Widget _getBottomTitles(
+    double value,
+    TitleMeta meta,
+    String lang,
+  ) {
     int index = value.toInt();
     DateTime now = DateTime.now();
     String text = '';
 
     try {
       if (_period == 'Weekly') {
-        DateTime start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-        text = DateFormat.E().format(start.add(Duration(days: index)));
+        DateTime start = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(
+          const Duration(days: 6),
+        );
+
+        text = DateFormat.E().format(
+          start.add(Duration(days: index)),
+        );
       } else if (_period == 'Monthly') {
         text = 'W${index + 1}';
       } else if (_period == 'Yearly') {
-        DateTime start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 364));
-        text = DateFormat.MMM().format(DateTime(start.year, start.month + index, 1));
+        DateTime start = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(
+          const Duration(days: 364),
+        );
+
+        text = DateFormat.MMM().format(
+          DateTime(
+            start.year,
+            start.month + index,
+            1,
+          ),
+        );
       }
     } catch (e) {
       text = '';
@@ -362,7 +525,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return SideTitleWidget(
       meta: meta,
       space: 8,
-      child: Text(text, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.grey[600],
+        ),
+      ),
     );
   }
 
@@ -371,42 +540,86 @@ class _HomeScreenState extends State<HomeScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(TranslationService.translate('no_transactions', lang)),
+          child: Text(
+            TranslationService.translate(
+              'no_transactions',
+              lang,
+            ),
+          ),
         ),
       );
     }
-    // Show top 10 transactions
-    int showCount = _filteredTransactions.length > 10 ? 10 : _filteredTransactions.length;
+
+    int showCount = _filteredTransactions.length > 10
+        ? 10
+        : _filteredTransactions.length;
+
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics:
+          const NeverScrollableScrollPhysics(),
       itemCount: showCount,
       itemBuilder: (context, index) {
         final tx = _filteredTransactions[index];
+
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
+          margin: const EdgeInsets.symmetric(
+            vertical: 4,
+          ),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: tx.type == TransactionType.income ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+              backgroundColor:
+                  tx.type == TransactionType.income
+                      ? Colors.green.withValues(
+                          alpha: 0.1,
+                        )
+                      : Colors.red.withValues(
+                          alpha: 0.1,
+                        ),
               child: Icon(
-                tx.type == TransactionType.income ? Icons.arrow_downward : Icons.arrow_upward,
-                color: tx.type == TransactionType.income ? Colors.green : Colors.red,
+                tx.type == TransactionType.income
+                    ? Icons.arrow_downward
+                    : Icons.arrow_upward,
+                color:
+                    tx.type == TransactionType.income
+                        ? Colors.green
+                        : Colors.red,
               ),
             ),
-            title: Text(tx.particular, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: ValueListenableBuilder<String>(
+            title: Text(
+              tx.particular,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle:
+                ValueListenableBuilder<String>(
               valueListenable: dateTypeNotifier,
-              builder: (context, dateType, _) {
-                return Text(dateType == 'AD' 
-                    ? tx.date 
-                    : DateTime.parse(tx.date).toNepaliDateTime().format('yyyy-MM-dd'));
+              builder: (
+                context,
+                dateType,
+                _,
+              ) {
+                return Text(
+                  dateType == 'AD'
+                      ? tx.date
+                      : ndp.NepaliDateTime
+                          .fromDateTime(
+                          DateTime.parse(tx.date),
+                        )
+                          .format('yyyy-MM-dd'),
+                );
               },
             ),
             trailing: Text(
               'Rs. ${tx.amount.toStringAsFixed(2)}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: tx.type == TransactionType.income ? Colors.green : Colors.red,
+                color:
+                    tx.type ==
+                            TransactionType.income
+                        ? Colors.green
+                        : Colors.red,
               ),
             ),
           ),
