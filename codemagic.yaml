@@ -1,3 +1,4 @@
+```yaml
 workflows:
   android-build:
     name: My Ledger Android Build
@@ -19,5 +20,29 @@ workflows:
         script: |
           flutter build apk --release
 
+      - name: Find and prepare APK
+        script: |
+          echo "Searching for generated APK..."
+
+          mkdir -p artifacts
+
+          APK_PATH=$(find . -type f -name "app-release.apk" | head -n 1)
+
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: APK not found!"
+            echo "All APK files:"
+            find . -type f -name "*.apk" -print
+            exit 1
+          fi
+
+          echo "APK found at:"
+          echo "$APK_PATH"
+
+          cp "$APK_PATH" artifacts/app-release.apk
+
+          echo "Final artifact:"
+          ls -lh artifacts/app-release.apk
+
     artifacts:
-      - android/build/app/outputs/flutter-apk/app-release.apk
+      - artifacts/app-release.apk
+```
