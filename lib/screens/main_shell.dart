@@ -312,86 +312,103 @@ class _MainShellState extends State<MainShell> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              _getTitle(
-                _currentIndex,
-                lang,
-              ),
-            ),
-            centerTitle: false,
-            titleSpacing: 0,
-            leading: isHomeTab
-                ? Builder(
-                    builder: (context) {
-                      return IconButton(
-                        icon: const Icon(Icons.menu),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      );
-                    },
-                  )
-                : null,
-            actions: [
-              if (isHomeTab)
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _currentFY.isEmpty
-                        ? null
-                        : _currentFY,
-                    hint: Text(
-                      TranslationService.translate(
-                        'select_fy',
-                        lang,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                    icon: const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.teal,
-                    ),
-                    items: [
-                      ..._fyList.map(
-                        (fy) {
-                          return DropdownMenuItem<String>(
-                            value: fy,
-                            child: Text(
-                              fy,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+            title: isHomeTab
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          return IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
                             ),
+                            icon: const Icon(Icons.menu),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
                           );
                         },
                       ),
-                      DropdownMenuItem<String>(
-                        value: 'ADD_NEW',
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.add,
-                              size: 18,
-                              color: Colors.teal,
+                      const SizedBox(width: 4),
+                      Text(
+                        _getTitle(
+                          _currentIndex,
+                          lang,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _currentFY.isEmpty
+                              ? null
+                              : _currentFY,
+                          hint: Text(
+                            TranslationService.translate(
+                              'select_fy',
+                              lang,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              TranslationService.translate(
-                                'add_fy',
-                                lang,
-                              ),
-                              style: const TextStyle(
-                                color: Colors.teal,
+                            style: const TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.teal,
+                          ),
+                          items: [
+                            ..._fyList.map(
+                              (fy) {
+                                return DropdownMenuItem<String>(
+                                  value: fy,
+                                  child: Text(
+                                    fy,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'ADD_NEW',
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.add,
+                                    size: 18,
+                                    color: Colors.teal,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    TranslationService.translate(
+                                      'add_fy',
+                                      lang,
+                                    ),
+                                    style: const TextStyle(
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
+                          onChanged: _onFYChanged,
                         ),
                       ),
                     ],
-                    onChanged: _onFYChanged,
+                  )
+                : Text(
+                    _getTitle(
+                      _currentIndex,
+                      lang,
+                    ),
                   ),
-                ),
+            centerTitle: false,
+            titleSpacing: 4,
+            leading: null,
+            actions: [
               if (!isHomeTab)
                 IconButton(
                   icon: const Icon(
@@ -401,28 +418,6 @@ class _MainShellState extends State<MainShell> {
                   onPressed: () {
                     _showSortOptions(lang);
                   },
-                ),
-              if (isHomeTab)
-                Padding(
-                  padding: const EdgeInsets.only(
-                    right: 8,
-                  ),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.teal.shade100,
-                    backgroundImage:
-                        _companyLogoPath.isNotEmpty
-                            ? FileImage(
-                                File(_companyLogoPath),
-                              )
-                            : null,
-                    child: _companyLogoPath.isEmpty
-                        ? const Icon(
-                            Icons.person,
-                            color: Colors.teal,
-                          )
-                        : null,
-                  ),
                 ),
             ],
           ),
