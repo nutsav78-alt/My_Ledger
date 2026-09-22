@@ -1,48 +1,41 @@
-```yaml
 workflows:
-  android-build:
-    name: My Ledger Android Build
-    max_build_duration: 60
+android-build:
+name: My Ledger Android Build
+max_build_duration: 60
 
-    environment:
-      flutter: stable
+```
+environment:
+  flutter: stable
 
-    scripts:
-      - name: Get Flutter packages
-        script: |
-          flutter pub get
+scripts:
+  - name: Get Flutter packages
+    script: |
+      flutter pub get
 
-      - name: Generate app icons
-        script: |
-          dart run flutter_launcher_icons
+  - name: Generate app icons
+    script: |
+      dart run flutter_launcher_icons
 
-      - name: Build Android APK
-        script: |
-          flutter build apk --release
+  - name: Build Android APK
+    script: |
+      flutter build apk --release
 
-      - name: Find and prepare APK
-        script: |
-          echo "Searching for generated APK..."
+  - name: Prepare APK artifact
+    script: |
+      mkdir -p artifacts
 
-          mkdir -p artifacts
+      APK_PATH=$(find . -type f -name "app-release.apk" | head -n 1)
 
-          APK_PATH=$(find . -type f -name "app-release.apk" | head -n 1)
+      if [ -z "$APK_PATH" ]; then
+        echo "ERROR: app-release.apk not found"
+        find . -type f -name "*.apk" -print
+        exit 1
+      fi
 
-          if [ -z "$APK_PATH" ]; then
-            echo "ERROR: APK not found!"
-            echo "All APK files:"
-            find . -type f -name "*.apk" -print
-            exit 1
-          fi
+      echo "APK found at: $APK_PATH"
+      cp "$APK_PATH" artifacts/app-release.apk
+      ls -lh artifacts/app-release.apk
 
-          echo "APK found at:"
-          echo "$APK_PATH"
-
-          cp "$APK_PATH" artifacts/app-release.apk
-
-          echo "Final artifact:"
-          ls -lh artifacts/app-release.apk
-
-    artifacts:
-      - artifacts/app-release.apk
+artifacts:
+  - artifacts/app-release.apk
 ```
